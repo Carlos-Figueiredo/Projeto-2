@@ -27,7 +27,6 @@ int main(){
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(5000);
     serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
     // Caso o cliente nao conecte ao server
     if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0){
         return 1;
@@ -37,13 +36,13 @@ int main(){
 
     while (1) { 
         //Leitura de entrada do cliente e envio
-        scanf("%s", sendBuff);
+        scanf(" %[^\n]s", sendBuff);
         write(sockfd, sendBuff, strlen(sendBuff));
 
         //Recebimento da mensagem
         n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
         recvBuff[n] = 0;
-        printf("%s ", recvBuff);
+        printf("%s", recvBuff);
         
     }
     return 0;
