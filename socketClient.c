@@ -27,20 +27,24 @@ int main(){
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(5000);
     serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    // Caso o cliente nao conecte ao server
-    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0){
-        return 1;
-    }
+    // // Caso o cliente nao conecte ao server
+    // if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0){
+    //     return 1;
+    // }
 
     //Loop infinito até que o usuário interrompa
 
     while (1) { 
         //Leitura de entrada do cliente e envio
         scanf(" %[^\n]s", sendBuff);
-        write(sockfd, sendBuff, strlen(sendBuff));
+        //sendto(int sockfd, const void *buf, int len, Unsigned int flags, const struct sockaddr *to, socklen_t *tolen);
+        sendto(sockfd, sendBuff, strlen(sendBuff), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+        //write(sockfd, sendBuff, strlen(sendBuff));
 
         //Recebimento da mensagem
-        n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
+        //recvfrom(int sockfd, void *buf, int len, unsigned int flags, struct sockaddr *from, int *fromlen);
+        n = recvfrom(sockfd, recvBuff, sizeof(recvBuff) - 1, 0, NULL, NULL);
+        // n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
         recvBuff[n] = 0;
         printf("%s", recvBuff);
         

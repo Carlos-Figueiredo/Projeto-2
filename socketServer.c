@@ -540,7 +540,7 @@ int main() {
 	int n;
 
 	listenfd = socket(AF_INET, SOCK_STREAM, 0);
-
+	
 	memset(&serv_addr, '0', sizeof(serv_addr));
 
 	serv_addr.sin_family = AF_INET;
@@ -548,16 +548,9 @@ int main() {
 	serv_addr.sin_port = htons(5000);
 
 	bind(listenfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-	listen(listenfd, 10);
 
 	while (1){
-		connfd = accept(listenfd, (struct sockaddr *)NULL, NULL);
-		if ( (pid = fork()) == 0 ) {
-			close(listenfd);
-			receiveCommands(connfd);
-			close(connfd);
-			exit(0);
-		}
+		receiveCommands();
 	}
 	return 0;
 }
