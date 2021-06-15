@@ -33,7 +33,7 @@ void receiveMessage(int connfd, char * message){
 	return;
 }
 
-void insertUser(int connfd){
+void insertUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	char recvBuff[1024];
 	char json[5000];
 	int n;
@@ -134,7 +134,7 @@ void insertUser(int connfd){
 	sendMessage(connfd, serv_addr, serv_len, "\nRegistro Inserido\n\n");
 }
 
-void printAllUsers(int connfd){
+void printAllUsers(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	FILE *filePointer;
 	char sendBuff[1025];
 	char json[5000];
@@ -225,7 +225,7 @@ void printUser(cJSON * user, char *message){
 	strcat(message, "\n");
 }
 
-void removerUser(int connfd){
+void removerUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	FILE *filePointer;
 	char sendBuff[1025];
 	char recvBuff[1024];
@@ -267,7 +267,7 @@ void removerUser(int connfd){
 
 }
 
-void findUser(int connfd){
+void findUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	FILE *filePointer;
 	char sendBuff[1025];
 	char recvBuff[1024];
@@ -303,7 +303,7 @@ void findUser(int connfd){
 	
 }
 
-void printFiltered(int connfd, int filter){
+void printFiltered(int connfd, struct sockaddr *serv_addr, socklen_t serv_len, int filter){
 	FILE *filePointer;
 	char sendBuff[1025];
 	char json[5000];
@@ -429,7 +429,7 @@ void printFiltered(int connfd, int filter){
 	sendMessage(connfd, serv_addr, serv_len, sendBuff);
 }
 
-void addAbility(int connfd){
+void addAbility(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	FILE *filePointer;
 	char sendBuff[1025];
 	char recvBuff[1024];
@@ -482,7 +482,7 @@ void addAbility(int connfd){
 	
 }
 
-void sendMenuMessage(int connfd){
+void sendMenuMessage(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	char sendBuff[1024];
 	strcpy(sendBuff, "\nInsira o comando desejado digitando o número:\n");
 	strcat(sendBuff,"1.Inserir perfil\n");
