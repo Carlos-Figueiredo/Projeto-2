@@ -12,8 +12,9 @@
 
 void printUser(cJSON * user, char * message);
 
-void sendMessage(int connfd, char * message){
-	write(connfd, message, strlen(message));
+void sendMessage(int connfd, struct sockaddr *serv_addr, socklen_t serv_len, char * message){
+	sendto(connfd, message, strlen(message), 0, serv_addr, serv_len);
+	//write(connfd, message, strlen(message));
 }
 
 void removeQuotes(char * string){
@@ -25,7 +26,8 @@ void receiveMessage(int connfd, char * message){
 	char recvBuff[1024];
 	int n;
 	
-	n = read(connfd, recvBuff, sizeof(recvBuff) - 1);
+	//n = read(connfd, recvBuff, sizeof(recvBuff) - 1);
+	n = recvfrom(connfd, recvBuff, sizeof(recvBuff) - 1, 0, NULL, NULL);
 	recvBuff[n] = 0;
 	strcpy(message, recvBuff);
 	return;
@@ -52,7 +54,7 @@ void insertUser(int connfd){
 	cJSON *experiences = cJSON_CreateArray();
 	char *pt;
 	
-	sendMessage(connfd, "\nInsira o email:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nInsira o email:\n");
 	receiveMessage(connfd, recvBuff);
 
 	
@@ -61,7 +63,7 @@ void insertUser(int connfd){
 		char * toString = cJSON_Print(cJSON_GetObjectItemCaseSensitive(user, "email"));
 		removeQuotes(toString);
 		if (strcmp(recvBuff, toString) == 0){
-			sendMessage(connfd, "\nEmail já utilizado em um perfil.\n\n");
+			sendMessage(connfd, serv_addr, serv_len, "\nEmail já utilizado em um perfil.\n\n");
 			return;
 		}
 	}
@@ -70,28 +72,28 @@ void insertUser(int connfd){
 	cJSON_AddStringToObject(user, "email", recvBuff);
 
 
-	sendMessage(connfd, "\nInsira o nome:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nInsira o nome:\n");
 	receiveMessage(connfd, recvBuff);
 	cJSON_AddStringToObject(user, "name", recvBuff);
 	
-	sendMessage(connfd, "\nInsira o sobrenome:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nInsira o sobrenome:\n");
 	receiveMessage(connfd, recvBuff);
 	cJSON_AddStringToObject(user, "lastName", recvBuff);
 
-	sendMessage(connfd, "\nInsira o endereço:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nInsira o endereço:\n");
 	receiveMessage(connfd, recvBuff);
 	cJSON_AddStringToObject(user, "address", recvBuff);
 
-	sendMessage(connfd, "\nInsira a formação:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nInsira a formação:\n");
 	receiveMessage(connfd, recvBuff);
 	cJSON_AddStringToObject(user, "graduate", recvBuff);
 
-	sendMessage(connfd, "\nInsira o ano de formatura:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nInsira o ano de formatura:\n");
 	receiveMessage(connfd, recvBuff);
 	cJSON_AddStringToObject(user, "year", recvBuff);
 
 	cJSON_AddItemToObject(user, "abilities", abilities);
-	sendMessage(connfd, "\nInsira suas habilidades:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nInsira suas habilidades:\n");
 	receiveMessage(connfd, recvBuff);
 	pt = strtok(recvBuff,",");
     while (pt != NULL) {
@@ -102,12 +104,12 @@ void insertUser(int connfd){
     }
 
 	cJSON_AddItemToObject(user, "experience", experiences);
-	sendMessage(connfd, "\nInsira a quantidade de experiências anteriores que deseja registrar:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nInsira a quantidade de experiências anteriores que deseja registrar:\n");
 	receiveMessage(connfd, recvBuff);
 	n = atoi(recvBuff);
 	
 	for (int i = 0; i < n; i++){
-		sendMessage(connfd, "\nInsira Experiência:\n");
+		sendMessage(connfd, serv_addr, serv_len, "\nInsira Experiência:\n");
 		receiveMessage(connfd, recvBuff);
 		cJSON_AddItemToArray(experiences, cJSON_CreateString(recvBuff));
 	}
@@ -129,7 +131,7 @@ void insertUser(int connfd){
 		fprintf(filePointer, "%s", cJSON_Print(userList));
 		fclose(filePointer);
 	}
-	sendMessage(connfd, "\nRegistro Inserido\n\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nRegistro Inserido\n\n");
 }
 
 void printAllUsers(int connfd){
@@ -138,7 +140,7 @@ void printAllUsers(int connfd){
 	char json[5000];
 	memset(sendBuff, 0, sizeof(sendBuff));
 	if (access("users.txt", F_OK) != 0) {
-		sendMessage(connfd, "\nNenhum perfil cadastrado\n");
+		sendMessage(connfd, serv_addr, serv_len, "\nNenhum perfil cadastrado\n");
 		return;
 	}
     filePointer = fopen("users.txt", "r");
@@ -150,7 +152,7 @@ void printAllUsers(int connfd){
 	cJSON_ArrayForEach(user, userList){
 		printUser(user, sendBuff);
 	}
-	sendMessage(connfd, sendBuff);
+	sendMessage(connfd, serv_addr, serv_len, sendBuff);
 }
 
 void printUser(cJSON * user, char *message){
@@ -231,7 +233,7 @@ void removerUser(int connfd){
 	memset(sendBuff, 0, sizeof(sendBuff));
 
 	if (access("users.txt", F_OK) != 0) {
-		sendMessage(connfd, "\nNenhum perfil cadastrado\n");
+		sendMessage(connfd, serv_addr, serv_len, "\nNenhum perfil cadastrado\n");
 		return;
 	}
 
@@ -242,7 +244,7 @@ void removerUser(int connfd){
 
 	cJSON *user = NULL;
 
-	sendMessage(connfd, "\nRemover um perfil\n\nInsira o email do perfil que deseja remover:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nRemover um perfil\n\nInsira o email do perfil que deseja remover:\n");
 	receiveMessage(connfd, recvBuff);
 	int i = 0;
 	cJSON_ArrayForEach(user, userList){
@@ -250,7 +252,7 @@ void removerUser(int connfd){
 		removeQuotes(toString);
 		if (strcmp(recvBuff, toString) == 0){
 			cJSON_DeleteItemFromArray(userList, i);
-			sendMessage(connfd, "\nPerfil deletado\n\n");
+			sendMessage(connfd, serv_addr, serv_len, "\nPerfil deletado\n\n");
 			filePointer = fopen("users.txt", "w");
 			fprintf(filePointer, "%s", cJSON_Print(userList));
 			fclose(filePointer);
@@ -261,7 +263,7 @@ void removerUser(int connfd){
 
 	
 
-	sendMessage(connfd, "\nPerfil não encontrado\n\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nPerfil não encontrado\n\n");
 
 }
 
@@ -273,7 +275,7 @@ void findUser(int connfd){
 	memset(sendBuff, 0, sizeof(sendBuff));
 
 	if (access("users.txt", F_OK) != 0) {
-		sendMessage(connfd, "\nNenhum perfil cadastrado\n");
+		sendMessage(connfd, serv_addr, serv_len, "\nNenhum perfil cadastrado\n");
 		return;
 	}
 
@@ -284,7 +286,7 @@ void findUser(int connfd){
 
 	cJSON *user = NULL;
 
-	sendMessage(connfd, "\nProcurar por perfil pelo email\n\nInsira o email do perfil:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nProcurar por perfil pelo email\n\nInsira o email do perfil:\n");
 	receiveMessage(connfd, recvBuff);
 
 	cJSON_ArrayForEach(user, userList){
@@ -293,11 +295,11 @@ void findUser(int connfd){
 		if (strcmp(recvBuff, toString) == 0){
 			strcat(sendBuff, "\n");
 			printUser(user, sendBuff);
-			sendMessage(connfd, sendBuff);
+			sendMessage(connfd, serv_addr, serv_len, sendBuff);
 			return;
 		}
 	}
-	sendMessage(connfd, "\nPerfil não encontrado\n\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nPerfil não encontrado\n\n");
 	
 }
 
@@ -308,7 +310,7 @@ void printFiltered(int connfd, int filter){
 	char recvBuff[1024];
 	memset(sendBuff, 0, sizeof(sendBuff));
 	if (access("users.txt", F_OK) != 0) {
-		sendMessage(connfd, "\nNenhum perfil cadastrado\n");
+		sendMessage(connfd, serv_addr, serv_len, "\nNenhum perfil cadastrado\n");
 		return;
 	}
     filePointer = fopen("users.txt", "r");
@@ -322,7 +324,7 @@ void printFiltered(int connfd, int filter){
 
 	//print all profiles of given graduate
 	if (filter == 1){
-		sendMessage(connfd, "\nProcurar por todos os perfis com determinada formação\n\nInsira a formação acadêmica que deseja buscar:\n");
+		sendMessage(connfd, serv_addr, serv_len, "\nProcurar por todos os perfis com determinada formação\n\nInsira a formação acadêmica que deseja buscar:\n");
 		receiveMessage(connfd, recvBuff);
 		strcat(sendBuff, "\nPerfis com formação em ");
 		strcat(sendBuff, recvBuff);
@@ -354,7 +356,7 @@ void printFiltered(int connfd, int filter){
 	}
 	//print all profiles of given ability
 	else if (filter == 2){
-		sendMessage(connfd, "\nProcurar por todos os perfis com determinada habilidade\n\nInsira a habilidade que deseja buscar:\n");
+		sendMessage(connfd, serv_addr, serv_len, "\nProcurar por todos os perfis com determinada habilidade\n\nInsira a habilidade que deseja buscar:\n");
 		receiveMessage(connfd, recvBuff);
 		strcat(sendBuff, "\nPerfis com habilidade em ");
 		strcat(sendBuff, recvBuff);
@@ -390,7 +392,7 @@ void printFiltered(int connfd, int filter){
 	}
 	//print all profiles of given graduate year
 	else if(filter == 3){
-		sendMessage(connfd, "\nProcurar por todos os perfis com curso completo no ano dado\n\nInsira o ano de formação acadêmica que deseja buscar:\n");
+		sendMessage(connfd, serv_addr, serv_len, "\nProcurar por todos os perfis com curso completo no ano dado\n\nInsira o ano de formação acadêmica que deseja buscar:\n");
 		receiveMessage(connfd, recvBuff);
 		strcat(sendBuff, "\nPerfis com formação no ano ");
 		strcat(sendBuff, recvBuff);
@@ -421,10 +423,10 @@ void printFiltered(int connfd, int filter){
 		}
 	}
 	if (flag == 0){
-		sendMessage(connfd, "\nNenhum perfil encontrado!\n\n");
+		sendMessage(connfd, serv_addr, serv_len, "\nNenhum perfil encontrado!\n\n");
 		return;
 	}
-	sendMessage(connfd, sendBuff);
+	sendMessage(connfd, serv_addr, serv_len, sendBuff);
 }
 
 void addAbility(int connfd){
@@ -435,7 +437,7 @@ void addAbility(int connfd){
 	memset(sendBuff, 0, sizeof(sendBuff));
 
 	if (access("users.txt", F_OK) != 0) {
-		sendMessage(connfd, "\nNenhum perfil cadastrado\n");
+		sendMessage(connfd, serv_addr, serv_len, "\nNenhum perfil cadastrado\n");
 		return;
 	}
 
@@ -446,14 +448,14 @@ void addAbility(int connfd){
 
 	cJSON *user = NULL;
 
-	sendMessage(connfd, "\nAdicionar habilidade a um perfil existente\n\nInsira o email do perfil:\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nAdicionar habilidade a um perfil existente\n\nInsira o email do perfil:\n");
 	receiveMessage(connfd, recvBuff);
 
 	cJSON_ArrayForEach(user, userList){
 		char * toString = cJSON_Print(cJSON_GetObjectItemCaseSensitive(user, "email"));
 		removeQuotes(toString);
 		if (strcmp(recvBuff, toString) == 0){
-			sendMessage(connfd, "\nInsira a habilidade que deseja inserir:\n");
+			sendMessage(connfd, serv_addr, serv_len, "\nInsira a habilidade que deseja inserir:\n");
 			receiveMessage(connfd, recvBuff);
 			cJSON * abilities = cJSON_GetObjectItemCaseSensitive(user, "abilities");
 			cJSON * ability = NULL;
@@ -461,7 +463,7 @@ void addAbility(int connfd){
 				char * toString = cJSON_Print(ability);
 				removeQuotes(toString);
 				if (strcmp(toString, recvBuff) == 0){
-					sendMessage(connfd, "\nHabilidade já inserida neste perfil!\n\n");
+					sendMessage(connfd, serv_addr, serv_len, "\nHabilidade já inserida neste perfil!\n\n");
 					return;
 				}				
 			}
@@ -471,12 +473,12 @@ void addAbility(int connfd){
 			fprintf(filePointer, "%s", cJSON_Print(userList));
 			fclose(filePointer);
 
-			sendMessage(connfd, "\nHabilidade inserida no perfil!\n\n");
+			sendMessage(connfd, serv_addr, serv_len, "\nHabilidade inserida no perfil!\n\n");
 
 			return;
 		}
 	}
-	sendMessage(connfd, "\nPerfil não encontrado\n\n");
+	sendMessage(connfd, serv_addr, serv_len, "\nPerfil não encontrado\n\n");
 	
 }
 
@@ -491,10 +493,10 @@ void sendMenuMessage(int connfd){
 	strcat(sendBuff,"6.Listar todos os perfis\n");
 	strcat(sendBuff,"7.Procurar por perfil dado o email\n");
 	strcat(sendBuff,"8.Remover um perfil\n\n");
-	sendMessage(connfd, sendBuff);
+	sendMessage(connfd, serv_addr, serv_len, sendBuff);
 }
 
-void receiveCommands(int connfd){
+void receiveCommands(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	char recvBuff[1024];
 	while (1){
 		receiveMessage(connfd, recvBuff);
@@ -550,7 +552,7 @@ int main() {
 	bind(listenfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 
 	while (1){
-		receiveCommands();
+		receiveCommands(listenfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 	}
 	return 0;
 }
