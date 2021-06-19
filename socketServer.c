@@ -8,13 +8,12 @@
 #include <string.h>
 #include <sys/types.h>
 #include "cJSON.h"
-
+#define MAX_MESSAGE 1024
 
 void printUser(cJSON * user, char * message);
 
-void sendMessage(int connfd, struct sockaddr *serv_addr, socklen_t serv_len, char * message){
-	sendto(connfd, message, strlen(message), 0, serv_addr, serv_len);
-	//write(connfd, message, strlen(message));
+void sendMessage(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len, char * message){
+	sendto(connfd, (const char *)message, strlen(message), 0, (struct sockaddr *)&serv_addr, serv_len);
 }
 
 void removeQuotes(char * string){
@@ -22,18 +21,16 @@ void removeQuotes(char * string){
 	string[strlen(string) - 1] = '\0';
 }
 
-void receiveMessage(int connfd, char * message){
-	char recvBuff[1024];
+void receiveMessage(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len, char * message){
+	char recvBuff[MAX_MESSAGE];
 	int n;
-	
-	//n = read(connfd, recvBuff, sizeof(recvBuff) - 1);
-	n = recvfrom(connfd, recvBuff, sizeof(recvBuff) - 1, 0, NULL, NULL);
-	recvBuff[n] = 0;
+	n = recvfrom(connfd, recvBuff, MAX_MESSAGE, 0, (struct sockaddr*)&serv_addr, &serv_len);
+	recvBuff[n] = '\0';
 	strcpy(message, recvBuff);
 	return;
 }
 
-void insertUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
+void insertUser(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	char recvBuff[1024];
 	char json[5000];
 	int n;
@@ -55,7 +52,7 @@ void insertUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	char *pt;
 	
 	sendMessage(connfd, serv_addr, serv_len, "\nInsira o email:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 
 	
 
@@ -73,28 +70,28 @@ void insertUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 
 
 	sendMessage(connfd, serv_addr, serv_len, "\nInsira o nome:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 	cJSON_AddStringToObject(user, "name", recvBuff);
 	
 	sendMessage(connfd, serv_addr, serv_len, "\nInsira o sobrenome:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 	cJSON_AddStringToObject(user, "lastName", recvBuff);
 
 	sendMessage(connfd, serv_addr, serv_len, "\nInsira o endereço:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 	cJSON_AddStringToObject(user, "address", recvBuff);
 
 	sendMessage(connfd, serv_addr, serv_len, "\nInsira a formação:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 	cJSON_AddStringToObject(user, "graduate", recvBuff);
 
 	sendMessage(connfd, serv_addr, serv_len, "\nInsira o ano de formatura:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 	cJSON_AddStringToObject(user, "year", recvBuff);
 
 	cJSON_AddItemToObject(user, "abilities", abilities);
 	sendMessage(connfd, serv_addr, serv_len, "\nInsira suas habilidades:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 	pt = strtok(recvBuff,",");
     while (pt != NULL) {
 		if (pt[0] == ' ') 
@@ -105,12 +102,12 @@ void insertUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 
 	cJSON_AddItemToObject(user, "experience", experiences);
 	sendMessage(connfd, serv_addr, serv_len, "\nInsira a quantidade de experiências anteriores que deseja registrar:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 	n = atoi(recvBuff);
 	
 	for (int i = 0; i < n; i++){
 		sendMessage(connfd, serv_addr, serv_len, "\nInsira Experiência:\n");
-		receiveMessage(connfd, recvBuff);
+		receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 		cJSON_AddItemToArray(experiences, cJSON_CreateString(recvBuff));
 	}
 
@@ -134,7 +131,7 @@ void insertUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	sendMessage(connfd, serv_addr, serv_len, "\nRegistro Inserido\n\n");
 }
 
-void printAllUsers(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
+void printAllUsers(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	FILE *filePointer;
 	char sendBuff[1025];
 	char json[5000];
@@ -225,7 +222,7 @@ void printUser(cJSON * user, char *message){
 	strcat(message, "\n");
 }
 
-void removerUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
+void removerUser(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	FILE *filePointer;
 	char sendBuff[1025];
 	char recvBuff[1024];
@@ -245,7 +242,7 @@ void removerUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	cJSON *user = NULL;
 
 	sendMessage(connfd, serv_addr, serv_len, "\nRemover um perfil\n\nInsira o email do perfil que deseja remover:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 	int i = 0;
 	cJSON_ArrayForEach(user, userList){
 		char * toString = cJSON_Print(cJSON_GetObjectItemCaseSensitive(user, "email"));
@@ -267,7 +264,7 @@ void removerUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 
 }
 
-void findUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
+void findUser(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	FILE *filePointer;
 	char sendBuff[1025];
 	char recvBuff[1024];
@@ -287,7 +284,7 @@ void findUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	cJSON *user = NULL;
 
 	sendMessage(connfd, serv_addr, serv_len, "\nProcurar por perfil pelo email\n\nInsira o email do perfil:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 
 	cJSON_ArrayForEach(user, userList){
 		char * toString = cJSON_Print(cJSON_GetObjectItemCaseSensitive(user, "email"));
@@ -303,7 +300,7 @@ void findUser(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	
 }
 
-void printFiltered(int connfd, struct sockaddr *serv_addr, socklen_t serv_len, int filter){
+void printFiltered(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len, int filter){
 	FILE *filePointer;
 	char sendBuff[1025];
 	char json[5000];
@@ -325,7 +322,7 @@ void printFiltered(int connfd, struct sockaddr *serv_addr, socklen_t serv_len, i
 	//print all profiles of given graduate
 	if (filter == 1){
 		sendMessage(connfd, serv_addr, serv_len, "\nProcurar por todos os perfis com determinada formação\n\nInsira a formação acadêmica que deseja buscar:\n");
-		receiveMessage(connfd, recvBuff);
+		receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 		strcat(sendBuff, "\nPerfis com formação em ");
 		strcat(sendBuff, recvBuff);
 		strcat(sendBuff, ":\n\n");
@@ -357,7 +354,7 @@ void printFiltered(int connfd, struct sockaddr *serv_addr, socklen_t serv_len, i
 	//print all profiles of given ability
 	else if (filter == 2){
 		sendMessage(connfd, serv_addr, serv_len, "\nProcurar por todos os perfis com determinada habilidade\n\nInsira a habilidade que deseja buscar:\n");
-		receiveMessage(connfd, recvBuff);
+		receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 		strcat(sendBuff, "\nPerfis com habilidade em ");
 		strcat(sendBuff, recvBuff);
 		strcat(sendBuff, ":\n\n");
@@ -393,7 +390,7 @@ void printFiltered(int connfd, struct sockaddr *serv_addr, socklen_t serv_len, i
 	//print all profiles of given graduate year
 	else if(filter == 3){
 		sendMessage(connfd, serv_addr, serv_len, "\nProcurar por todos os perfis com curso completo no ano dado\n\nInsira o ano de formação acadêmica que deseja buscar:\n");
-		receiveMessage(connfd, recvBuff);
+		receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 		strcat(sendBuff, "\nPerfis com formação no ano ");
 		strcat(sendBuff, recvBuff);
 		strcat(sendBuff, ":\n\n");
@@ -429,7 +426,7 @@ void printFiltered(int connfd, struct sockaddr *serv_addr, socklen_t serv_len, i
 	sendMessage(connfd, serv_addr, serv_len, sendBuff);
 }
 
-void addAbility(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
+void addAbility(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	FILE *filePointer;
 	char sendBuff[1025];
 	char recvBuff[1024];
@@ -449,14 +446,14 @@ void addAbility(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	cJSON *user = NULL;
 
 	sendMessage(connfd, serv_addr, serv_len, "\nAdicionar habilidade a um perfil existente\n\nInsira o email do perfil:\n");
-	receiveMessage(connfd, recvBuff);
+	receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 
 	cJSON_ArrayForEach(user, userList){
 		char * toString = cJSON_Print(cJSON_GetObjectItemCaseSensitive(user, "email"));
 		removeQuotes(toString);
 		if (strcmp(recvBuff, toString) == 0){
 			sendMessage(connfd, serv_addr, serv_len, "\nInsira a habilidade que deseja inserir:\n");
-			receiveMessage(connfd, recvBuff);
+			receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 			cJSON * abilities = cJSON_GetObjectItemCaseSensitive(user, "abilities");
 			cJSON * ability = NULL;
 			cJSON_ArrayForEach(ability, abilities){
@@ -482,7 +479,7 @@ void addAbility(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
 	
 }
 
-void sendMenuMessage(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
+void sendMenuMessage(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	char sendBuff[1024];
 	strcpy(sendBuff, "\nInsira o comando desejado digitando o número:\n");
 	strcat(sendBuff,"1.Inserir perfil\n");
@@ -496,64 +493,69 @@ void sendMenuMessage(int connfd, struct sockaddr *serv_addr, socklen_t serv_len)
 	sendMessage(connfd, serv_addr, serv_len, sendBuff);
 }
 
-void receiveCommands(int connfd, struct sockaddr *serv_addr, socklen_t serv_len){
+void receiveCommands(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	char recvBuff[1024];
 	while (1){
-		receiveMessage(connfd, recvBuff);
+		receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 		if (strcmp(recvBuff, "1") == 0){
-			insertUser(connfd);
+			insertUser(connfd, serv_addr, serv_len);
 		}
 		else if (strcmp(recvBuff, "2") == 0){
-			addAbility(connfd);
+			addAbility(connfd, serv_addr, serv_len);
 		}
 		else if (strcmp(recvBuff, "3") == 0){
-			printFiltered(connfd, 1);	
+			printFiltered(connfd, serv_addr, serv_len, 1);	
 		}
 		else if (strcmp(recvBuff, "4") == 0){
-			printFiltered(connfd, 2);	
+			printFiltered(connfd, serv_addr, serv_len, 2);
 		}
 		else if (strcmp(recvBuff, "5") == 0){
-			printFiltered(connfd, 3);
+			printFiltered(connfd, serv_addr, serv_len, 3);
 		}
 		else if (strcmp(recvBuff, "6") == 0){
-			printAllUsers(connfd);
+			printAllUsers(connfd, serv_addr, serv_len);
 		}
 		else if (strcmp(recvBuff, "7") == 0){
-			findUser(connfd);
+			findUser(connfd, serv_addr, serv_len);
 		}
 		else if (strcmp(recvBuff, "8") == 0){
-			removerUser(connfd);
+			removerUser(connfd, serv_addr, serv_len);
 		}
 		else if (strcmp(recvBuff, "0") == 0){
 			return;
 		}
 		else{
-			sendMenuMessage(connfd);
+			sendMenuMessage(connfd, serv_addr, serv_len);
 		}
 	}
 }
 
 int main() {
 
-	pid_t pid;
-	int connfd = 0;
-	int listenfd = 0;
-	struct sockaddr_in serv_addr;
+	int listenfd;
+	struct sockaddr_in serv_addr, client_addr;
 	int n;
 
-	listenfd = socket(AF_INET, SOCK_STREAM, 0);
-	
+	listenfd = socket(AF_INET, SOCK_DGRAM, 0);
 	memset(&serv_addr, '0', sizeof(serv_addr));
+	memset(&serv_addr, '0', sizeof(client_addr));
+
 
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(5000);
 
-	bind(listenfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-
+	bind(listenfd, (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
+	char recvBuff[1024];
+	socklen_t  clientLen = sizeof(client_addr);
+	
+	int flag = 0;
 	while (1){
-		receiveCommands(listenfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+		n = recvfrom(listenfd, recvBuff, 1024, 0, (struct sockaddr*)&client_addr, &clientLen);
+		sendMenuMessage(listenfd, client_addr, clientLen);
+		receiveCommands(listenfd, client_addr, clientLen);
 	}
+    
 	return 0;
 }
 
