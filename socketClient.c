@@ -35,6 +35,7 @@ int main(){
         //Leitura de entrada do cliente e envio
         scanf(" %[^\n]s", sendBuff);
         sendto(sockfd, (const char *)sendBuff, strlen(sendBuff), 0, (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
+        
         //Recebimento da mensagem
         n = recvfrom(sockfd, (char *)recvBuff, 8000, 0, (struct sockaddr *) &serv_addr, &len);
         recvBuff[n] = '\0';

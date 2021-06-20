@@ -538,7 +538,7 @@ int main() {
 
 	listenfd = socket(AF_INET, SOCK_DGRAM, 0);
 	memset(&serv_addr, '0', sizeof(serv_addr));
-	memset(&serv_addr, '0', sizeof(client_addr));
+	memset(&client_addr, '0', sizeof(client_addr));
 
 
 	serv_addr.sin_family = AF_INET;
