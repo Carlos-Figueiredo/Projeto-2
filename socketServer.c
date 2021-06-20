@@ -8,7 +8,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include "cJSON.h"
-#define MAX_MESSAGE 1024
+
 
 void printUser(cJSON * user, char * message);
 
@@ -22,17 +22,17 @@ void removeQuotes(char * string){
 }
 
 void receiveMessage(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len, char * message){
-	char recvBuff[MAX_MESSAGE];
+	char recvBuff[8000];
 	int n;
-	n = recvfrom(connfd, recvBuff, MAX_MESSAGE, 0, (struct sockaddr*)&serv_addr, &serv_len);
+	n = recvfrom(connfd, recvBuff, 8000, 0, (struct sockaddr*)&serv_addr, &serv_len);
 	recvBuff[n] = '\0';
 	strcpy(message, recvBuff);
 	return;
 }
 
 void insertUser(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
-	char recvBuff[1024];
-	char json[5000];
+	char recvBuff[8000];
+	char json[8000];
 	int n;
     FILE *filePointer;
 	cJSON *userList;
@@ -133,8 +133,8 @@ void insertUser(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 
 void printAllUsers(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	FILE *filePointer;
-	char sendBuff[1025];
-	char json[5000];
+	char sendBuff[8000];
+	char json[8000];
 	memset(sendBuff, 0, sizeof(sendBuff));
 	if (access("users.txt", F_OK) != 0) {
 		sendMessage(connfd, serv_addr, serv_len, "\nNenhum perfil cadastrado\n");
@@ -224,9 +224,9 @@ void printUser(cJSON * user, char *message){
 
 void removerUser(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	FILE *filePointer;
-	char sendBuff[1025];
-	char recvBuff[1024];
-	char json[5000];
+	char sendBuff[8000];
+	char recvBuff[8000];
+	char json[8000];
 	memset(sendBuff, 0, sizeof(sendBuff));
 
 	if (access("users.txt", F_OK) != 0) {
@@ -266,9 +266,9 @@ void removerUser(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 
 void findUser(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	FILE *filePointer;
-	char sendBuff[1025];
-	char recvBuff[1024];
-	char json[5000];
+	char sendBuff[8000];
+	char recvBuff[8000];
+	char json[8000];
 	memset(sendBuff, 0, sizeof(sendBuff));
 
 	if (access("users.txt", F_OK) != 0) {
@@ -302,9 +302,9 @@ void findUser(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 
 void printFiltered(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len, int filter){
 	FILE *filePointer;
-	char sendBuff[1025];
-	char json[5000];
-	char recvBuff[1024];
+	char sendBuff[8000];
+	char json[8000];
+	char recvBuff[8000];
 	memset(sendBuff, 0, sizeof(sendBuff));
 	if (access("users.txt", F_OK) != 0) {
 		sendMessage(connfd, serv_addr, serv_len, "\nNenhum perfil cadastrado\n");
@@ -428,9 +428,9 @@ void printFiltered(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len,
 
 void addAbility(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 	FILE *filePointer;
-	char sendBuff[1025];
-	char recvBuff[1024];
-	char json[5000];
+	char sendBuff[8000];
+	char recvBuff[8000];
+	char json[8000];
 	memset(sendBuff, 0, sizeof(sendBuff));
 
 	if (access("users.txt", F_OK) != 0) {
@@ -480,7 +480,7 @@ void addAbility(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
 }
 
 void sendMenuMessage(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
-	char sendBuff[1024];
+	char sendBuff[8000];
 	strcpy(sendBuff, "\nInsira o comando desejado digitando o número:\n");
 	strcat(sendBuff,"1.Inserir perfil\n");
 	strcat(sendBuff,"2.Adicionar habilidade a um perfil existente\n");
@@ -494,7 +494,7 @@ void sendMenuMessage(int connfd, struct sockaddr_in serv_addr, socklen_t serv_le
 }
 
 void receiveCommands(int connfd, struct sockaddr_in serv_addr, socklen_t serv_len){
-	char recvBuff[1024];
+	char recvBuff[8000];
 	while (1){
 		receiveMessage(connfd, serv_addr, serv_len, recvBuff);
 		if (strcmp(recvBuff, "1") == 0){
@@ -546,12 +546,12 @@ int main() {
 	serv_addr.sin_port = htons(5000);
 
 	bind(listenfd, (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
-	char recvBuff[1024];
+	char recvBuff[8000];
 	socklen_t  clientLen = sizeof(client_addr);
 	
-	int flag = 0;
+	
 	while (1){
-		n = recvfrom(listenfd, recvBuff, 1024, 0, (struct sockaddr*)&client_addr, &clientLen);
+		n = recvfrom(listenfd, recvBuff, 8000, 0, (struct sockaddr*)&client_addr, &clientLen);
 		sendMenuMessage(listenfd, client_addr, clientLen);
 		receiveCommands(listenfd, client_addr, clientLen);
 	}
